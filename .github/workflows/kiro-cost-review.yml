@@ -25,6 +25,6 @@ jobs:
         uses: konippi/kiro-cli-review-action@v1
         with:
           kiro_api_key: ${{ secrets.KIRO_API_KEY }}
-          agent: code-reviewer
+          # agent: code-reviewer   # TEMP: control test with bundled agent
           max_diff_size: 20000
           debug: true
