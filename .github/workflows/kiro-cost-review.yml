@@ -27,3 +27,4 @@ jobs:
           kiro_api_key: ${{ secrets.KIRO_API_KEY }}
           agent: code-reviewer
           max_diff_size: 20000
+          debug: true
