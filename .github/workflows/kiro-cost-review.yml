@@ -1,0 +1,29 @@
+name: Kiro Cost Review
+
+on:
+  pull_request:
+    types: [opened, ready_for_review]
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  cost-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || '' }}
+
+      - name: Kiro cost-optimization review
+        uses: konippi/kiro-cli-review-action@v1
+        with:
+          kiro_api_key: ${{ secrets.KIRO_API_KEY }}
+          agent: code-reviewer
+          max_diff_size: 20000
