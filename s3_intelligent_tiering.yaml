@@ -10,4 +10,16 @@ DataBucket_BEFORE:
       DestinationBucketName: !Ref AccessLogsBucket
       LogFilePrefix: data-access-logs/
 
+# New analytics bucket. Stores large volumes of data with unpredictable,
+# changing access patterns over time. No lifecycle or tiering configured —
+# all objects stay in S3 Standard indefinitely.
+AnalyticsDataBucket:
+  Type: AWS::S3::Bucket
+  Properties:
+    BucketName: arc319-analytics-raw-data
+    BucketEncryption:
+      ServerSideEncryptionConfiguration:
+        - ServerSideEncryptionByDefault:
+            SSEAlgorithm: AES256
+
 
