@@ -25,5 +25,6 @@ jobs:
         uses: konippi/kiro-cli-review-action@v1
         with:
           kiro_api_key: ${{ secrets.KIRO_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           agent: code-reviewer
           max_diff_size: 20000
