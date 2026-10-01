@@ -1,0 +1,13 @@
+
+DataBucket_BEFORE:
+  Type: AWS::S3::Bucket
+  Properties:
+    BucketEncryption:
+      ServerSideEncryptionConfiguration:
+        - ServerSideEncryptionByDefault:
+            SSEAlgorithm: AES256
+    LoggingConfiguration:
+      DestinationBucketName: !Ref AccessLogsBucket
+      LogFilePrefix: data-access-logs/
+
+
