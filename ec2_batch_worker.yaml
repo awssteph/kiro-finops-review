@@ -1,0 +1,35 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Batch processing worker for the analytics pipeline
+
+Resources:
+  # Worker that runs nightly batch jobs. Sized for the historical peak and
+  # left running 24/7. Uses an x86 general-purpose instance and a gp2 root
+  # volume. No autoscaling or scheduled start/stop.
+  BatchWorkerInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: m5.2xlarge
+      ImageId: ami-0abcdef1234567890
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeType: gp2
+            VolumeSize: 500
+      Tags:
+        - Key: Name
+          Value: arc319-batch-worker
+        - Key: Workload
+          Value: nightly-batch
+
+  # Dedicated data volume for intermediate batch artifacts. Provisioned IOPS
+  # at a flat high value regardless of actual throughput needs.
+  BatchDataVolume:
+    Type: AWS::EC2::Volume
+    Properties:
+      AvailabilityZone: us-east-1a
+      Size: 1000
+      VolumeType: io1
+      Iops: 20000
+      Tags:
+        - Key: Name
+          Value: arc319-batch-data
