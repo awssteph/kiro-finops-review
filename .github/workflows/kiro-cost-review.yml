@@ -28,3 +28,4 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           agent: code-reviewer
           max_diff_size: 20000
+          debug: true
