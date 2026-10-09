@@ -1,0 +1,46 @@
+name: Kiro FinOps Review
+description: Review pull requests for AWS cost risks with a bundled Kiro agent and rubric
+author: Stephanie Gooch
+
+branding:
+  icon: dollar-sign
+  color: orange
+
+inputs:
+  kiro_api_key:
+    description: Kiro CLI API key from a Kiro Pro, Pro+, or Power subscription
+    required: true
+  github_token:
+    description: GitHub token used to read the pull request and post review comments
+    required: true
+  trigger_phrase:
+    description: Phrase that triggers review or question mode on PR comments
+    required: false
+    default: "@kiro"
+  max_diff_size:
+    description: Maximum pull-request diff size in bytes
+    required: false
+    default: "20000"
+  debug:
+    description: Print raw Kiro CLI JSONL output; this can expose source content
+    required: false
+    default: "false"
+
+outputs:
+  conclusion:
+    description: Result of the action (success or skipped)
+    value: ${{ steps.review.outputs.conclusion }}
+
+runs:
+  using: composite
+  steps:
+    - id: review
+      name: Run Kiro AWS cost review
+      shell: bash
+      env:
+        INPUT_KIRO_API_KEY: ${{ inputs.kiro_api_key }}
+        INPUT_GITHUB_TOKEN: ${{ inputs.github_token }}
+        INPUT_TRIGGER_PHRASE: ${{ inputs.trigger_phrase }}
+        INPUT_MAX_DIFF_SIZE: ${{ inputs.max_diff_size }}
+        INPUT_DEBUG: ${{ inputs.debug }}
+      run: bash "$GITHUB_ACTION_PATH/scripts/run-review.sh"
