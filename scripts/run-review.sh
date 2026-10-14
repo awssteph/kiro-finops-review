@@ -50,20 +50,27 @@ if event_name == "pull_request":
         values = ("skip", "", "", "event does not identify a pull request")
     else:
         values = ("run", repository, number, "pull_request")
-elif event_name == "issue_comment":
-    issue = event.get("issue") or {}
+elif event_name in {"issue_comment", "pull_request_review_comment"}:
     comment = event.get("comment") or {}
     body = comment.get("body") or ""
     association = (comment.get("author_association") or "").upper()
     trusted = {"OWNER", "MEMBER", "COLLABORATOR"}
-    if not issue.get("pull_request"):
-        values = ("skip", repository, issue.get("number", ""), "comment is not attached to a pull request")
-    elif trigger_phrase.lower() not in body.lower():
-        values = ("skip", repository, issue.get("number", ""), "comment does not contain the trigger phrase")
-    elif association not in trusted:
-        values = ("skip", repository, issue.get("number", ""), "comment author is not trusted")
+    if event_name == "issue_comment":
+        issue = event.get("issue") or {}
+        number = issue.get("number")
+        attached_to_pull_request = bool(issue.get("pull_request"))
     else:
-        values = ("run", repository, issue.get("number", ""), "issue_comment")
+        pull_request = event.get("pull_request") or {}
+        number = pull_request.get("number")
+        attached_to_pull_request = bool(number)
+    if not attached_to_pull_request:
+        values = ("skip", repository, number or "", "comment is not attached to a pull request")
+    elif trigger_phrase.lower() not in body.lower():
+        values = ("skip", repository, number or "", "comment does not contain the trigger phrase")
+    elif association not in trusted:
+        values = ("skip", repository, number or "", "comment author is not trusted")
+    else:
+        values = ("run", repository, number, event_name)
 else:
     values = ("skip", repository, "", "unsupported event")
 
