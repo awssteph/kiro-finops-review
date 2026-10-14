@@ -18,18 +18,6 @@ Point out:
 - `max_diff_size` limits how much untrusted pull-request content is reviewed.
 - `debug` is off by default because raw output can include source content.
 
-### `scripts/run-review.sh`
-
-**Say:**
-
-> This script is the bridge between GitHub Actions and Kiro. It validates the event, downloads the pull-request diff, installs Kiro CLI, starts the official GitHub MCP server, and runs our reviewer headlessly.
-
-Point out:
-
-- Only pull-request events and trusted `@kiro` comments are accepted.
-- The script uses the released action files, not files supplied by the pull request.
-- It uses GitHub MCP tools; it does not need AWS credentials or access to an AWS account.
-
 ### `reviewer/code-reviewer.json`
 
 **Say:**
@@ -44,38 +32,12 @@ Point out:
 
 ## 2. Show what existed before Kiro
 
-Open `riv26_arch319_code_examples/demo-assets/workflow-before.yaml`.
+Open `riv26_arch319_code_examples/demo-assets/main.yaml`.
 
 **Say:**
 
 > We already have normal CI. `cfn-lint` checks that the CloudFormation template is structurally valid. That is necessary, but valid infrastructure can still be unnecessarily expensive.
 
-The existing check is intentionally simple:
-
-```yaml
-jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - run: python -m pip install "cfn-lint==1.34.0"
-      - run: cfn-lint 'cloudformation/**/*.yaml'
-```
-
-Open `cloudformation/s3_bucket.yaml`.
-
-**Say:**
-
-> This bucket is valid CloudFormation, so lint passes. However, analytics data with changing access patterns remains in S3 Standard forever. A syntax checker cannot decide whether that storage design is cost-efficient.
-
-For the review demo, `cloudformation/s3_bucket.yaml` must be a **newly added file** in the pull-request diff. Copy it from `demo-assets/s3_bucket.yaml` and leave the demo asset in place. Do not move or rename the demo asset: GitHub will classify a content-identical move as a rename with no added infrastructure lines for the diff-only reviewer to assess.
-
-## 3. Show the completed workflow
-
-Open `riv26_arch319_code_examples/demo-assets/workflow-completed.yaml` or `.github/workflows/main.yaml`.
 
 **Say:**
 
@@ -129,11 +91,23 @@ review:
 
 **Say:**
 
-> Pull-request changes run lint and cost review. Trusted `@kiro` comments can request a follow-up. Only the review job gets write access, and fork pull requests do not receive the Kiro secret. The Kiro job needs no checkout because it reads the PR through GitHub.
+> push this to main  changes run lint and cost review. Trusted `@kiro` comments can request a follow-up. Only the review job gets write access, and fork pull requests do not receive the Kiro secret. The Kiro job needs no checkout because it reads the PR through GitHub.
+
+## 3. Create branch then add s£
+
+Open `cloudformation/s3_bucket.yaml`.
+
+**Say:**
+
+> This bucket is valid CloudFormation, so lint passes. However, analytics data with changing access patterns remains in S3 Standard forever. A syntax checker cannot decide whether that storage design is cost-efficient.
+
+For the review demo, `cloudformation/s3_bucket.yaml` must be a **newly added file** in the pull-request diff. Copy it from `demo-assets/s3_bucket.yaml` and leave the demo asset in place. Do not move or rename the demo asset: GitHub will classify a content-identical move as a rename with no added infrastructure lines for the diff-only reviewer to assess.
+
 
 ## 4. Trigger the finding
 
 Open a pull request that adds `cloudformation/s3_bucket.yaml` as a new file. Keep `demo-assets/s3_bucket.yaml` in place so GitHub does not collapse the change into a rename.
+This takes a while so lets go to one we ran earlier. 
 
 **Say:**
 
@@ -145,53 +119,8 @@ Show:
 2. The Kiro review on `AnalyticsDataBucket`.
 3. The explanation of storage impact, recommended change, and trade-off.
 
-## 5. Hand-code the solution
 
-Under `AnalyticsDataBucket.Properties`, add:
-
-```yaml
-LifecycleConfiguration:
-  Rules:
-    - Id: MoveToIntelligentTiering
-      Status: Enabled
-      Transitions:
-        - StorageClass: INTELLIGENT_TIERING
-          TransitionInDays: 0
-```
-
-The completed resource should look like:
-
-```yaml
-AnalyticsDataBucket:
-  Type: AWS::S3::Bucket
-  Properties:
-    BucketName: arc319-analytics-raw-data
-    BucketEncryption:
-      ServerSideEncryptionConfiguration:
-        - ServerSideEncryptionByDefault:
-            SSEAlgorithm: AES256
-    LifecycleConfiguration:
-      Rules:
-        - Id: MoveToIntelligentTiering
-          Status: Enabled
-          Transitions:
-            - StorageClass: INTELLIGENT_TIERING
-              TransitionInDays: 0
-```
-
-**Say:**
-
-> We are not blindly accepting a generated change. Kiro explains the concern, and the engineer chooses and implements the appropriate lifecycle policy. Intelligent-Tiering adds a per-object monitoring charge, so object size and access patterns still matter.
-
-Commit and push the change to the pull-request branch.
-
-**Say:**
-
-> The `synchronize` event reruns both checks. Lint confirms the template remains valid, and Kiro reviews the updated cost design.
-
-## 6. Optional `@kiro` interaction
-
-If the completed workflow is already on the repository's default branch, comment:
+the completed workflow is already on the repository's default branch, comment:
 
 ```text
 @kiro review this again
