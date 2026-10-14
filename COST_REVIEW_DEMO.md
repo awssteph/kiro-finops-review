@@ -11,7 +11,7 @@ No AWS credentials are involved.
 PR event or trusted @kiro comment
               |
               v
- awssteph/kiro-finops-review@v1.0.0
+ awssteph/kiro-finops-review@v1.0.2
               |
               +-- validate event and author
               +-- reject oversized diffs
@@ -41,9 +41,12 @@ and changed files through GitHub MCP, creates a pending review, adds inline comm
 and submits the review as `COMMENT`. If it finds no cost concern, it submits a short
 no-cost-concerns review.
 
-On a trusted PR comment containing `@kiro`, the agent answers a substantive question or
-runs another review when the comment only requests review. Both the workflow and action
-accept comment triggers only from `OWNER`, `MEMBER`, or `COLLABORATOR` associations.
+On a trusted top-level PR comment or inline review comment containing `@kiro`, the
+agent answers a substantive question or runs another review when the comment only
+requests review. Both the workflow and action accept comment triggers only from
+`OWNER`, `MEMBER`, or `COLLABORATOR` associations. Answers are posted to the PR
+conversation so they remain visible even when the question originated in an inline
+review thread.
 
 Each cost finding identifies the affected resource or line, explains the likely cost
 impact, recommends a concrete fix, and states a trade-off to validate. Covered areas
@@ -57,7 +60,7 @@ Add `KIRO_API_KEY` as a repository Actions secret, then use the immutable releas
 
 ```yaml
 - name: Kiro FinOps review
-  uses: awssteph/kiro-finops-review@v1.0.0
+  uses: awssteph/kiro-finops-review@v1.0.2
   with:
     kiro_api_key: ${{ secrets.KIRO_API_KEY }}
     github_token: ${{ github.token }}
@@ -71,14 +74,20 @@ loading fails instead of reporting a misleading successful run.
 
 ## Publishing
 
-Commit and push the tested files, create the immutable `v1.0.0` GitHub release, select
+Commit and push the tested files, create the immutable `v1.0.2` GitHub release, select
 the Marketplace publishing option, choose **Code quality**, and publish using two-factor
 authentication. Consumers cannot resolve the action until that release tag exists.
 
 ## Demo finding
 
-`s3_intelligent_tiering.yaml` intentionally defines an S3 bucket without lifecycle rules
-or Intelligent-Tiering. A review should identify that Standard storage can retain cold
+For the demo, copy `demo-assets/s3_bucket.yaml` to
+`cloudformation/s3_bucket.yaml` on the pull-request branch and keep the source file in
+place. The destination must appear as a newly added file in the PR diff, not as a
+content-identical rename. The action reviews cost implications introduced by the diff;
+it is not a baseline audit of unchanged resources.
+
+The new template intentionally defines an S3 bucket without lifecycle rules or
+Intelligent-Tiering. A review should identify that Standard storage can retain cold
 data indefinitely, recommend lifecycle transitions or Intelligent-Tiering, and mention
 retrieval, minimum-duration, and monitoring-fee trade-offs.
 

@@ -2,6 +2,8 @@
 
 Review only the pull-request diff. Do not access live AWS accounts. Comment only on
 cost. For each finding, state what to flag, a concrete fix, and a trade-off to validate.
+For infrastructure-as-code or configuration findings, include a syntactically valid,
+directly applicable fenced code snippet in the source language.
 
 ## Compute architecture
 
@@ -31,8 +33,9 @@ memory can increase duration and total cost.
 
 Flag buckets without lifecycle rules, expiration for logs or old versions, or tiering
 for variable access. Recommend appropriate transitions, expiration, aborted multipart
-upload cleanup, and Intelligent-Tiering for unknown access patterns. Validate retrieval
-latency, minimum-duration charges, and per-object monitoring fees.
+upload cleanup, and Intelligent-Tiering for unknown access patterns. For CloudFormation,
+show a `LifecycleConfiguration` block placed under the affected bucket's `Properties`.
+Validate retrieval latency, minimum-duration charges, and per-object monitoring fees.
 
 ## EBS gp3
 

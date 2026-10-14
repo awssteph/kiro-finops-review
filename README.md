@@ -17,6 +17,8 @@ on:
     types: [opened, ready_for_review, synchronize]
   issue_comment:
     types: [created]
+  pull_request_review_comment:
+    types: [created]
 
 permissions:
   contents: read
@@ -26,15 +28,19 @@ permissions:
 jobs:
   review:
     if: >-
-      github.event_name == 'pull_request' ||
+      (github.event_name == 'pull_request' &&
+       github.event.pull_request.head.repo.full_name == github.repository) ||
       (github.event_name == 'issue_comment' &&
        github.event.issue.pull_request &&
+       contains(github.event.comment.body, '@kiro') &&
+       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)) ||
+      (github.event_name == 'pull_request_review_comment' &&
        contains(github.event.comment.body, '@kiro') &&
        contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association))
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: awssteph/kiro-finops-review@v1.0.0
+      - uses: awssteph/kiro-finops-review@v1.0.2
         with:
           kiro_api_key: ${{ secrets.KIRO_API_KEY }}
           github_token: ${{ github.token }}
@@ -64,8 +70,10 @@ The `conclusion` output is `success` or `skipped`. Execution errors fail the ste
 - `reviewer/cost-review-rubric.md` defines the AWS cost checks.
 
 The bundled agent and rubric are loaded from the released action, not from the PR
-branch. A pull request therefore cannot weaken its own reviewer. The action only
-accepts `@kiro` comments from repository owners, members, and collaborators.
+branch. A pull request therefore cannot weaken its own reviewer. The action accepts
+trusted `@kiro` questions from both the PR conversation and inline review threads;
+answers are posted to the PR conversation. Only repository owners, members, and
+collaborators can trigger comment handling.
 
 The action installs the current Kiro CLI using Kiro's official Linux installer because
 the public installer does not currently expose version selection. The official GitHub
@@ -74,12 +82,12 @@ MCP container is pinned in the runner script.
 ## Publish to GitHub Marketplace
 
 1. Commit and push the tested action files to the public repository.
-2. Create a GitHub release with the immutable tag `v1.0.0`.
+2. Create a GitHub release with the immutable tag `v1.0.2`.
 3. Select **Publish this Action to the GitHub Marketplace** on the release page.
 4. Choose the **Code quality** category and complete Marketplace validation.
 5. Publish the release using two-factor authentication.
 
-Workflows cannot use `awssteph/kiro-finops-review@v1.0.0` until that remote release tag
+Workflows cannot use `awssteph/kiro-finops-review@v1.0.2` until that remote release tag
 exists. Pinning consumers to a full commit SHA provides stronger immutable execution.
 
 ## Security notes
